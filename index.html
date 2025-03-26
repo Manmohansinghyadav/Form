@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Karan Enterprises</title>
+  
+  <!-- ✅ Bootstrap CSS -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+
+<!-- ✅ Navbar -->
+<div class="container my-3">
+  <nav class="navbar navbar-expand-lg navbar-light">
+    <div class="container-fluid d-flex flex-wrap">
+      <h1 class="me-auto fs-4">Karan Enterprises</h1>
+      <div id="current-time" class="ms-auto fs-5 fw-bold text-end"></div>
+    </div>
+  </nav>
+</div>
+
+<!-- ✅ Form Section -->
+<div class="container mt-4">
+  <div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+      <div class="form-content p-4 border rounded shadow">
+        <h3 class="mb-4 text-center">Today's Entry</h3>
+        <!-- post -->
+        <form method="post" name="google-sheet" id="dataForm">
+          <!-- Customer -->
+          <div class="mb-3">
+            <h5>Select Customer Name</h5>
+            <select id="customer" name="customerName" class="form-select" required>
+              <option selected disabled value="">Select Customer</option>
+              <option value="Mohan">Mohan</option>
+              <option value="Deepu">Deepu</option>
+              <option value="Harsh">Harsh</option>
+            </select>
+          </div>
+
+          <!-- No. of Bottles -->
+          <div class="mb-3">
+            <h5>Select No. of Bottles</h5>
+            <select id="bottles" name="Bottles" class="form-select" required>
+              <!-- Options from 1 to 10 -->
+              <option selected disabled value="">Select No. of Bottles</option>
+              <option value="1">1</option>
+              <option value="2">2</option>
+              <option value="3">3</option>
+              <option value="4">4</option>
+              <option value="5">5</option>
+              <option value="6">6</option>
+              <option value="7">7</option>
+              <option value="8">8</option>
+              <option value="9">9</option>
+              <option value="10">10</option>
+            </select>
+          </div>
+
+          <!-- Submit Button -->
+          <div class="mt-4">
+            <button type="submit"  id="submitBtn" class="btn btn-primary w-100">Submit
+              <span id="spinner" class="spinner-border spinner-border-sm ms-2 d-none" role="status" aria-hidden="true"></span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+
+<!-- ✅ JS Libraries -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
+
+<!-- ✅ Time Display -->
+<script>
+  function updateTime() {
+    const currentTimeElement = document.getElementById('current-time');
+    const now = new Date();
+
+    const timeString = now.toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+    });
+
+    currentTimeElement.textContent = timeString;
+  }
+
+  setInterval(updateTime, 1000);
+  updateTime();
+</script>
+
+<script>
+  const scriptURL = 'https://script.google.com/macros/s/AKfycbxA8p5FW01AFUx2li8AqZYxKgiqwntZ3_MPHTsmW06KK1tQ0AyvN-_ef5l8XoFpNZp90w/exec';
+const form = document.forms['google-sheet'];
+const submitBtn = document.getElementById('submitBtn');
+const spinner = document.getElementById('spinner');
+
+form.addEventListener('submit', (e) => {
+  e.preventDefault();
+
+  // ✅ Spinner show karo + Button disable karo
+  submitBtn.disabled = true;
+  spinner.classList.remove('d-none');
+
+  fetch(scriptURL, { method: 'POST', body: new FormData(form) })
+    .then(response => response.json()) // ✅ Response ko JSON me convert karo
+    .then(data => {
+      if (data.result === 'success') {
+        alert(`✅ Form submitted successfully! Row: ${data.row}`);
+        form.reset();
+      } else {
+        alert(`❌ Error: ${data.error}`);
+      }
+    })
+    .catch(error => {
+      console.error('Error!', error.message);
+      alert('❌ Something went wrong. Please try again.');
+    })
+    .finally(() => {
+      // ✅ Spinner hide karo + Button enable karo
+      submitBtn.disabled = false;
+      spinner.classList.add('d-none');
+    });
+});
+
+</script>
+
+</body>
+</html>
