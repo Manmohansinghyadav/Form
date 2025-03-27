@@ -15,7 +15,10 @@
   <nav class="navbar navbar-expand-lg navbar-light">
     <div class="container-fluid d-flex flex-wrap">
       <h1 class="me-auto fs-4">Karan Enterprises</h1>
-      <div id="current-time" class="ms-auto fs-5 fw-bold text-end"></div>
+      <div class="ms-auto text-end">
+        <div id="current-date" class="fs-6"></div>
+        <div id="current-time" class="fs-5 fw-bold"></div>
+      </div>
     </div>
   </nav>
 </div>
@@ -26,39 +29,52 @@
     <div class="col-md-8 col-lg-6">
       <div class="form-content p-4 border rounded shadow">
         <h3 class="mb-4 text-center">Today's Entry</h3>
+        <!-- post -->
         <form method="post" name="google-sheet" id="dataForm">
-          
-          <!-- ✅ Customer -->
+          <!-- Customer -->
+          <!-- ✅ Customer Name -->
           <div class="mb-3">
             <h5>Select Customer Name</h5>
-            <div class="input-group">
-              <select id="customer" name="customerName" class="form-select" required>
-                <option selected disabled value="">Select Customer</option>
-              </select>
-              <button type="button" class="btn btn-success" onclick="addCustomer()">+</button>
-              <button type="button" class="btn btn-danger" onclick="removeCustomer()">-</button>
-            </div>
-          </div>
-
-          <!-- ✅ No. of Bottles -->
-          <div class="mb-3">
-            <h5>Select No. of Bottles</h5>
-            <select id="bottles" name="Bottles" class="form-select" required>
-              <option selected disabled value="">Select No. of Bottles</option>
+            <select id="customer" name="customerName" class="form-select" required>
+              <option selected disabled value="">Select Customer</option>
             </select>
           </div>
 
-          <!-- ✅ Submit Button -->
+          <!-- No. of Bottles -->
+          <div class="mb-3">
+            <h5>Select No. of Bottles</h5>
+            <select id="bottles" name="Bottles" class="form-select" required>
+              <!-- Options from 1 to 10 -->
+              <option selected disabled value="">Select No. of Bottles</option>
+              <option value="1">1</option>
+              <option value="2">2</option>
+              <option value="3">3</option>
+              <option value="4">4</option>
+              <option value="5">5</option>
+              <option value="6">6</option>
+              <option value="7">7</option>
+              <option value="8">8</option>
+              <option value="9">9</option>
+              <option value="10">10</option>
+            </select>
+          </div>
+
+          <!-- Submit Button -->
           <div class="mt-4">
-            <button type="submit" id="submitBtn" class="btn btn-primary w-100">Submit
+            <button type="submit"  id="submitBtn" class="btn btn-primary w-100">Submit
               <span id="spinner" class="spinner-border spinner-border-sm ms-2 d-none" role="status" aria-hidden="true"></span>
             </button>
           </div>
+          
+
         </form>
       </div>
     </div>
   </div>
 </div>
+
+
+
 
 <!-- ✅ JS Libraries -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
@@ -67,14 +83,24 @@
 <script>
   function updateTime() {
     const currentTimeElement = document.getElementById('current-time');
+    const currentDateElement = document.getElementById('current-date');
     const now = new Date();
 
+    // ✅ Date format: DD-MM-YYYY
+    const dateString = now.toLocaleDateString('en-GB', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    });
+
+    // ✅ Time format: HH:MM:SS AM/PM
     const timeString = now.toLocaleTimeString('en-US', {
       hour: '2-digit',
       minute: '2-digit',
       second: '2-digit',
     });
 
+    currentDateElement.textContent = dateString;
     currentTimeElement.textContent = timeString;
   }
 
@@ -82,123 +108,59 @@
   updateTime();
 </script>
 
-<!-- ✅ Dropdown Handling -->
+<!-- ✅ JS Code for Fetching Customer List -->
 <script>
-  const bottlesSelect = document.getElementById('bottles');
-  const customerSelect = document.getElementById('customer');
-
-  // ✅ Generate options for No. of Bottles (1 to 10)
-  for (let i = 1; i <= 10; i++) {
-    const option = document.createElement('option');
-    option.value = i;
-    option.textContent = i;
-    bottlesSelect.appendChild(option);
-  }
-
-  // ✅ Restore saved selection for Bottles
-  const savedBottles = localStorage.getItem('selectedBottles');
-  if (savedBottles) {
-    bottlesSelect.value = savedBottles;
-  }
-
-  bottlesSelect.addEventListener('change', () => {
-    localStorage.setItem('selectedBottles', bottlesSelect.value);
-  });
-
-  // ✅ Load Customers from localStorage
-  function loadCustomers() {
-    const customers = JSON.parse(localStorage.getItem('customers')) || [];
-    customerSelect.innerHTML = '<option selected disabled value="">Select Customer</option>';
-    customers.forEach(customer => {
-      const option = document.createElement('option');
-      option.value = customer;
-      option.textContent = customer;
-      customerSelect.appendChild(option);
-    });
-
-    // ✅ Restore saved selection for Customer
-    const savedCustomer = localStorage.getItem('selectedCustomer');
-    if (savedCustomer) {
-      customerSelect.value = savedCustomer;
-    }
-  }
-
-  // ✅ Add Customer
-  function addCustomer() {
-    const newCustomer = prompt("Enter new customer name:");
-    if (newCustomer) {
-      let customers = JSON.parse(localStorage.getItem('customers')) || [];
-      if (!customers.includes(newCustomer)) {
-        customers.push(newCustomer);
-        localStorage.setItem('customers', JSON.stringify(customers));
-        loadCustomers();
-      } else {
-        alert("Customer already exists!");
-      }
-    }
-  }
-
-  // ✅ Remove Customer
-  function removeCustomer() {
-    const selectedCustomer = customerSelect.value;
-    if (selectedCustomer) {
-      if (confirm(`Are you sure you want to remove "${selectedCustomer}"?`)) {
-        let customers = JSON.parse(localStorage.getItem('customers')) || [];
-        customers = customers.filter(customer => customer !== selectedCustomer);
-        localStorage.setItem('customers', JSON.stringify(customers));
-        loadCustomers();
-      }
-    } else {
-      alert("Please select a customer to remove.");
-    }
-  }
-
-  // ✅ Save Customer Selection
-  customerSelect.addEventListener('change', () => {
-    localStorage.setItem('selectedCustomer', customerSelect.value);
-  });
-
-  // ✅ Initial Load
-  loadCustomers();
+  // ✅ customer.json file se data fetch karo
+  fetch('customer.json')
+    .then(response => response.json())
+    .then(data => {
+      const customerSelect = document.getElementById('customer');
+      
+      // ✅ JSON se customer ke naam add karo
+      data.forEach(customer => {
+        const option = document.createElement('option');
+        option.value = customer.name;
+        option.textContent = customer.name;
+        customerSelect.appendChild(option);
+      });
+    })
+    .catch(error => console.error('❌ Error loading customer data:', error));
 </script>
 
-<!-- ✅ Form Submission -->
 <script>
   const scriptURL = 'https://script.google.com/macros/s/AKfycbxA8p5FW01AFUx2li8AqZYxKgiqwntZ3_MPHTsmW06KK1tQ0AyvN-_ef5l8XoFpNZp90w/exec';
-  const form = document.forms['google-sheet'];
-  const submitBtn = document.getElementById('submitBtn');
-  const spinner = document.getElementById('spinner');
+const form = document.forms['google-sheet'];
+const submitBtn = document.getElementById('submitBtn');
+const spinner = document.getElementById('spinner');
 
-  form.addEventListener('submit', (e) => {
-    e.preventDefault();
+form.addEventListener('submit', (e) => {
+  e.preventDefault();
 
-    // ✅ Show spinner + disable button
-    submitBtn.disabled = true;
-    spinner.classList.remove('d-none');
+  // ✅ Spinner show karo + Button disable karo
+  submitBtn.disabled = true;
+  spinner.classList.remove('d-none');
 
-    fetch(scriptURL, { method: 'POST', body: new FormData(form) })
-      .then(response => response.json())
-      .then(data => {
-        if (data.result === 'success') {
-          alert(`✅ Form submitted successfully! Row: ${data.row}`);
-          form.reset();
-          localStorage.removeItem('selectedCustomer');
-          localStorage.removeItem('selectedBottles');
-          loadCustomers();
-        } else {
-          alert(`❌ Error: ${data.error}`);
-        }
-      })
-      .catch(error => {
-        console.error('Error!', error.message);
-        alert('❌ Something went wrong. Please try again.');
-      })
-      .finally(() => {
-        // ✅ Hide spinner + enable button
-        submitBtn.disabled = false;
-        spinner.classList.add('d-none');
-      });
-  });
+  fetch(scriptURL, { method: 'POST', body: new FormData(form) })
+    .then(response => response.json()) // ✅ Response ko JSON me convert karo
+    .then(data => {
+      if (data.result === 'success') {
+        alert(`✅ Form submitted successfully! Row: ${data.row}`);
+        form.reset();
+      } else {
+        alert(`❌ Error: ${data.error}`);
+      }
+    })
+    .catch(error => {
+      console.error('Error!', error.message);
+      alert('❌ Something went wrong. Please try again.');
+    })
+    .finally(() => {
+      // ✅ Spinner hide karo + Button enable karo
+      submitBtn.disabled = false;
+      spinner.classList.add('d-none');
+    });
+});
+
 </script>
 
 </body>
