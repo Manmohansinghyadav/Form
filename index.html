@@ -15,7 +15,10 @@
   <nav class="navbar navbar-expand-lg navbar-light">
     <div class="container-fluid d-flex flex-wrap">
       <h1 class="me-auto fs-4">Karan Enterprises</h1>
-      <div id="current-time" class="ms-auto fs-5 fw-bold text-end"></div>
+      <div class="ms-auto text-end">
+        <div id="current-date" class="fs-6"></div>
+        <div id="current-time" class="fs-5 fw-bold"></div>
+      </div>
     </div>
   </nav>
 </div>
@@ -80,14 +83,24 @@
 <script>
   function updateTime() {
     const currentTimeElement = document.getElementById('current-time');
+    const currentDateElement = document.getElementById('current-date');
     const now = new Date();
 
+    // ✅ Date format: DD-MM-YYYY
+    const dateString = now.toLocaleDateString('en-GB', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    });
+
+    // ✅ Time format: HH:MM:SS AM/PM
     const timeString = now.toLocaleTimeString('en-US', {
       hour: '2-digit',
       minute: '2-digit',
       second: '2-digit',
     });
 
+    currentDateElement.textContent = dateString;
     currentTimeElement.textContent = timeString;
   }
 
