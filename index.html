@@ -4,9 +4,15 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Karan Enterprises</title>
-  
+
   <!-- ✅ Bootstrap CSS -->
   <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    .customer-item:hover {
+      background-color: var(--bs-light);
+    }
+  </style>
+ 
 </head>
 <body>
 
@@ -29,139 +35,288 @@
     <div class="col-md-8 col-lg-6">
       <div class="form-content p-4 border rounded shadow">
         <h3 class="mb-4 text-center">Today's Entry</h3>
-        <!-- post -->
-        <form method="post" name="google-sheet" id="dataForm">
-          <!-- Customer -->
+        <form id="dataForm" name="google-sheet">
+
+         
           <!-- ✅ Customer Name -->
+          <!-- <div class="mb-3 ">
+            <h5>Select Customer Name</h5>
+            <select id="customer" name="customerName" class="form-select   form-select-sm" required>
+              <option selected disabled value=""  >Select Customer</option>
+            </select>
+          </div> -->
+
+
+          <!-- ✅ Customer Selection Box -->
           <div class="mb-3">
             <h5>Select Customer Name</h5>
-            <select id="customer" name="customerName" class="form-select" required>
-              <option selected disabled value="">Select Customer</option>
-            </select>
-          </div>
-
-          <!-- No. of Bottles -->
-          <div class="mb-3">
-            <h5>Select No. of Bottles</h5>
-            <select id="bottles" name="Bottles" class="form-select" required>
-              <!-- Options from 1 to 10 -->
-              <option selected disabled value="">Select No. of Bottles</option>
-              <option value="1">1</option>
-              <option value="2">2</option>
-              <option value="3">3</option>
-              <option value="4">4</option>
-              <option value="5">5</option>
-              <option value="6">6</option>
-              <option value="7">7</option>
-              <option value="8">8</option>
-              <option value="9">9</option>
-              <option value="10">10</option>
-            </select>
-          </div>
-
-          <!-- Submit Button -->
-          <div class="mt-4">
-            <button type="submit"  id="submitBtn" class="btn btn-primary w-100">Submit
-              <span id="spinner" class="spinner-border spinner-border-sm ms-2 d-none" role="status" aria-hidden="true"></span>
-            </button>
+            <div id="customer-box" class="border p-2 rounded" style="max-height: 200px; overflow-y: auto;">
+              <p class="text-muted">Loading customers...</p>
+            </div>
+            <input type="hidden" id="selectedCustomer" name="customerName" required />
           </div>
           
 
+          <!-- ✅ No. of Bottles -->
+          <div class="mb-3">
+            <h5>Select No. of Bottles</h5>
+            <select id="bottles" name="Bottles" class="form-select" required>
+              <option selected disabled value="">Select No. of Bottles</option>
+              <script>
+                const bottlesSelect = document.getElementById('bottles');
+                for (let i = 1; i <= 10; i++) {
+                  const option = document.createElement('option');
+                  option.value = i;
+                  option.textContent = i;
+                  bottlesSelect.appendChild(option);
+                }
+              </script>
+            </select>
+          </div>
+
+          <!-- ✅ Select Date -->
+          <div class="mb-3">
+            <h5>Select Date</h5>
+            <input type="date" id="entryDate" name="entryDate" class="form-control" />
+          </div>
+
+          <!-- ✅ Submit Button -->
+          <button type="submit" id="submitBtn" class="btn btn-primary w-100">
+            Submit
+            <span id="spinner" class="spinner-border spinner-border-sm ms-2 d-none"></span>
+          </button>
         </form>
       </div>
     </div>
   </div>
 </div>
 
+<!-- ✅ Add New Customer Button -->
+<div class="text-center mt-3">
+  <button class="btn btn-outline-success" data-bs-toggle="modal" data-bs-target="#addCustomerModal">
+    + Add New Customer
+  </button>
+</div>
 
+<!-- ✅ Modal for Adding New Customer -->
+<div class="modal fade" id="addCustomerModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5>Add New Customer</h5>
+        <button class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <form id="addCustomerForm">
+          <input type="text" id="newCustomerName" class="form-control" placeholder="Customer Name" required />
+          <button type="submit" id="addCustomerBtn" class="btn btn-primary mt-3 w-100">
+            Add Customer
+            <span id="addCustomerSpinner" class="spinner-border spinner-border-sm ms-2 d-none"></span>
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
 
+<!-- ✅ Customer List Section -->
+<div class="container mt-4">
+  <h5 class="mb-3">Customer List</h5>
+  <button id="toggleCustomerListBtn" class="btn btn-outline-primary mb-2">Show Customer List</button>
+  <div id="customer-list" class="border rounded p-2 d-none" style="max-block-size: 190px; overflow-y: auto;"></div>
+</div>
 
-<!-- ✅ JS Libraries -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
-
-<!-- ✅ Time Display -->
+<!-- ✅ JS Code -->
 <script>
-  function updateTime() {
-    const currentTimeElement = document.getElementById('current-time');
-    const currentDateElement = document.getElementById('current-date');
-    const now = new Date();
+  const customerSelect = document.getElementById('customer');
 
-    // ✅ Date format: DD-MM-YYYY
-    const dateString = now.toLocaleDateString('en-GB', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
+  // ✅ Load Customers from Server and JSON
+// ✅ Load Customers from Server and JSON
+// async function loadCustomers() {
+//   try {
+//     // ✅ Load from customer.json
+//     const jsonResponse = await fetch('customer.json');
+//     const jsonData = await jsonResponse.json();
+
+//     // ✅ Load from server
+//     const serverResponse = await fetch('http://localhost:5000/customers');
+//     const serverData = await serverResponse.json();
+
+//     // ✅ Combine and remove duplicates
+//     const customers = [...new Set([...jsonData.map(c => c.name), ...serverData.map(c => c.name)])];
+
+//     const customerList = document.getElementById('customer-list');
+//     customerSelect.innerHTML = '<option selected disabled value="">Select Customer</option>';
+//     customerList.innerHTML = '';
+
+//     // ✅ Add all customers directly with scrolling enabled
+//     customers.forEach(name => {
+//       const option = document.createElement('option');
+//       option.value = name;
+//       option.textContent = name;
+//       customerSelect.appendChild(option);
+//     });
+
+//     // ✅ Set dropdown height and enable scrolling
+//     customerSelect.style.maxHeight = '150px'; /* Adjust height as needed */
+//     customerSelect.style.overflowY = 'auto'; // ✅ Enable vertical scrolling
+
+//     // ✅ Add customers to the list section
+//     customers.forEach(name => {
+//       const div = document.createElement('div');
+//       div.className = 'd-flex justify-content-between align-items-center p-2 border-bottom';
+//       div.innerHTML = `
+//         <span>${name}</span>
+//         <button class="btn btn-sm btn-danger" onclick="removeCustomer('${name}')">Remove</button>
+//       `;
+//       customerList.appendChild(div);
+//     });
+//   } catch (error) {
+//     console.error('❌ Error loading customer data:', error);
+//   }
+// }
+
+
+// ✅ Load Customers from JSON & Server
+async function loadCustomers() {
+  try {
+    const jsonResponse = await fetch('customer.json');
+    const jsonData = await jsonResponse.json();
+
+    const serverResponse = await fetch('http://localhost:5000/customers');
+    const serverData = await serverResponse.json();
+
+    const customers = [...new Set([...jsonData.map(c => c.name), ...serverData.map(c => c.name)])];
+
+    const customerBox = document.getElementById('customer-box');
+    const selectedCustomerInput = document.getElementById('selectedCustomer');
+
+    customerBox.innerHTML = ''; // Clear previous data
+
+    customers.forEach(name => {
+      const customerItem = document.createElement('div');
+      customerItem.className = 'customer-item p-2 border-bottom text-center';
+      customerItem.textContent = name;
+      customerItem.style.cursor = 'pointer';
+      customerItem.onclick = function () {
+        document.querySelectorAll('.customer-item').forEach(item => item.classList.remove('bg-primary', 'text-white'));
+        customerItem.classList.add('bg-primary', 'text-white'); // Highlight selected
+        selectedCustomerInput.value = name;
+      };
+      customerBox.appendChild(customerItem);
     });
-
-    // ✅ Time format: HH:MM:SS AM/PM
-    const timeString = now.toLocaleTimeString('en-US', {
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-    });
-
-    currentDateElement.textContent = dateString;
-    currentTimeElement.textContent = timeString;
+  } catch (error) {
+    console.error('❌ Error loading customer data:', error);
+    document.getElementById('customer-box').innerHTML = '<p class="text-danger">Error loading customers.</p>';
   }
+}
 
+// ✅ Load customers on page load
+loadCustomers();
+
+
+  // ✅ Remove Customer
+  async function removeCustomer(customerName) {
+    console.log(`Attempting to remove: ${customerName}`); 
+  if (!confirm(`Are you sure you want to remove "${customerName}"?`)) return;
+
+  try {
+    const response = await fetch(`http://localhost:5000/customers/${encodeURIComponent(customerName)}`, {
+      method: 'DELETE',
+    });
+
+    const data = await response.json();
+    if (response.ok) {
+      alert(`✅ "${customerName}" has been removed.`);
+      loadCustomers(); // ✅ Refresh customer list
+    } else {
+      alert(`❌ Error: ${data.error}`);
+    }
+  } catch (error) {
+    console.error('❌ Error:', error);
+  }
+}
+
+
+  // ✅ Form Submission to Google Sheets
+  const scriptURL = 'https://script.google.com/macros/s/AKfycbxA8p5FW01AFUx2li8AqZYxKgiqwntZ3_MPHTsmW06KK1tQ0AyvN-_ef5l8XoFpNZp90w/exec';
+  const form = document.forms['google-sheet'];
+  const submitBtn = document.getElementById('submitBtn');
+  const spinner = document.getElementById('spinner');
+
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    submitBtn.disabled = true;
+    spinner.classList.remove('d-none');
+
+    // ✅ Set current date if no date is selected
+    const dateInput = document.getElementById('entryDate');
+    if (!dateInput.value) {
+      const today = new Date().toISOString().split('T')[0];
+      dateInput.value = today;
+    }
+
+    fetch(scriptURL, { method: 'POST', body: new FormData(form) })
+      .then(response => response.json())
+      .then(data => {
+        if (data.result === 'success') {
+          alert(`✅ Form submitted successfully! Row: ${data.row}`);
+          form.reset();
+        }
+      })
+      .catch(error => console.error('❌ Error:', error))
+      .finally(() => {
+        submitBtn.disabled = false;
+        spinner.classList.add('d-none');
+      });
+  });
+
+  // ✅ Add New Customer
+  document.getElementById('addCustomerForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const newCustomer = document.getElementById('newCustomerName').value;
+    const response = await fetch('http://localhost:5000/customers', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: newCustomer }),
+    });
+
+    if ((await response.json()).success) {
+      alert('✅ Customer added successfully!');
+      loadCustomers();
+    }
+  });
+
+  // ✅ Live Date and Time
+  function updateTime() {
+    const now = new Date();
+    document.getElementById('current-date').textContent = now.toLocaleDateString('en-GB');
+    document.getElementById('current-time').textContent = now.toLocaleTimeString('en-US');
+  }
   setInterval(updateTime, 1000);
   updateTime();
+
+  // ✅ Toggle Customer List Visibility
+  const toggleCustomerListBtn = document.getElementById('toggleCustomerListBtn');
+  const customerList = document.getElementById('customer-list');
+
+  toggleCustomerListBtn.addEventListener('click', () => {
+    if (customerList.classList.contains('d-none')) {
+      customerList.classList.remove('d-none');
+      toggleCustomerListBtn.textContent = 'Hide Customer List';
+    } else {
+      customerList.classList.add('d-none');
+      toggleCustomerListBtn.textContent = 'Show Customer List';
+    }
+  });
+
+  // ✅ Load Data on Page Load
+  loadCustomers();
 </script>
 
-<!-- ✅ JS Code for Fetching Customer List -->
-<script>
-  // ✅ customer.json file se data fetch karo
-  fetch('customer.json')
-    .then(response => response.json())
-    .then(data => {
-      const customerSelect = document.getElementById('customer');
-      
-      // ✅ JSON se customer ke naam add karo
-      data.forEach(customer => {
-        const option = document.createElement('option');
-        option.value = customer.name;
-        option.textContent = customer.name;
-        customerSelect.appendChild(option);
-      });
-    })
-    .catch(error => console.error('❌ Error loading customer data:', error));
-</script>
-
-<script>
-  const scriptURL = 'https://script.google.com/macros/s/AKfycbxA8p5FW01AFUx2li8AqZYxKgiqwntZ3_MPHTsmW06KK1tQ0AyvN-_ef5l8XoFpNZp90w/exec';
-const form = document.forms['google-sheet'];
-const submitBtn = document.getElementById('submitBtn');
-const spinner = document.getElementById('spinner');
-
-form.addEventListener('submit', (e) => {
-  e.preventDefault();
-
-  // ✅ Spinner show karo + Button disable karo
-  submitBtn.disabled = true;
-  spinner.classList.remove('d-none');
-
-  fetch(scriptURL, { method: 'POST', body: new FormData(form) })
-    .then(response => response.json()) // ✅ Response ko JSON me convert karo
-    .then(data => {
-      if (data.result === 'success') {
-        alert(`✅ Form submitted successfully! Row: ${data.row}`);
-        form.reset();
-      } else {
-        alert(`❌ Error: ${data.error}`);
-      }
-    })
-    .catch(error => {
-      console.error('Error!', error.message);
-      alert('❌ Something went wrong. Please try again.');
-    })
-    .finally(() => {
-      // ✅ Spinner hide karo + Button enable karo
-      submitBtn.disabled = false;
-      spinner.classList.add('d-none');
-    });
-});
-
-</script>
+<!-- ✅ Bootstrap JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
 
 </body>
 </html>
