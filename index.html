@@ -128,115 +128,82 @@
 
 <!-- ✅ JS Code -->
 <script>
-  const customerSelect = document.getElementById('customer');
+  async function loadCustomers() {
+    try {
+      // Fetch customers from customer.json
+      const jsonResponse = await fetch('customer.json');
+      if (!jsonResponse.ok) throw new Error('Failed to load customer.json');
+      const jsonData = await jsonResponse.json();
 
-  // ✅ Load Customers from Server and JSON
-// ✅ Load Customers from Server and JSON
-// async function loadCustomers() {
-//   try {
-//     // ✅ Load from customer.json
-//     const jsonResponse = await fetch('customer.json');
-//     const jsonData = await jsonResponse.json();
+      // Fetch customers from the server
+      const serverResponse = await fetch('http://localhost:5000/customers');
+      if (!serverResponse.ok) throw new Error('Failed to load customers from server');
+      const serverData = await serverResponse.json();
 
-//     // ✅ Load from server
-//     const serverResponse = await fetch('http://localhost:5000/customers');
-//     const serverData = await serverResponse.json();
+      // Combine and deduplicate customer names
+      const customers = [...new Set([...jsonData.map(c => c.name), ...serverData.map(c => c.name)])];
 
-//     // ✅ Combine and remove duplicates
-//     const customers = [...new Set([...jsonData.map(c => c.name), ...serverData.map(c => c.name)])];
+      // Populate the customer selection box
+      const customerBox = document.getElementById('customer-box');
+      const customerList = document.getElementById('customer-list');
+      const selectedCustomerInput = document.getElementById('selectedCustomer');
 
-//     const customerList = document.getElementById('customer-list');
-//     customerSelect.innerHTML = '<option selected disabled value="">Select Customer</option>';
-//     customerList.innerHTML = '';
+      customerBox.innerHTML = ''; // Clear previous data
+      customerList.innerHTML = ''; // Clear previous data
 
-//     // ✅ Add all customers directly with scrolling enabled
-//     customers.forEach(name => {
-//       const option = document.createElement('option');
-//       option.value = name;
-//       option.textContent = name;
-//       customerSelect.appendChild(option);
-//     });
+      customers.forEach(name => {
+        // Add to customer-box
+        const customerItem = document.createElement('div');
+        customerItem.className = 'customer-item p-2 border-bottom text-center';
+        customerItem.textContent = name;
+        customerItem.style.cursor = 'pointer';
+        customerItem.onclick = function () {
+          document.querySelectorAll('.customer-item').forEach(item => item.classList.remove('bg-primary', 'text-white'));
+          customerItem.classList.add('bg-primary', 'text-white'); // Highlight selected
+          selectedCustomerInput.value = name;
+        };
+        customerBox.appendChild(customerItem);
 
-//     // ✅ Set dropdown height and enable scrolling
-//     customerSelect.style.maxHeight = '150px'; /* Adjust height as needed */
-//     customerSelect.style.overflowY = 'auto'; // ✅ Enable vertical scrolling
-
-//     // ✅ Add customers to the list section
-//     customers.forEach(name => {
-//       const div = document.createElement('div');
-//       div.className = 'd-flex justify-content-between align-items-center p-2 border-bottom';
-//       div.innerHTML = `
-//         <span>${name}</span>
-//         <button class="btn btn-sm btn-danger" onclick="removeCustomer('${name}')">Remove</button>
-//       `;
-//       customerList.appendChild(div);
-//     });
-//   } catch (error) {
-//     console.error('❌ Error loading customer data:', error);
-//   }
-// }
-
-
-// ✅ Load Customers from JSON & Server
-async function loadCustomers() {
-  try {
-    const jsonResponse = await fetch('customer.json');
-    const jsonData = await jsonResponse.json();
-
-    const serverResponse = await fetch('http://localhost:5000/customers');
-    const serverData = await serverResponse.json();
-
-    const customers = [...new Set([...jsonData.map(c => c.name), ...serverData.map(c => c.name)])];
-
-    const customerBox = document.getElementById('customer-box');
-    const selectedCustomerInput = document.getElementById('selectedCustomer');
-
-    customerBox.innerHTML = ''; // Clear previous data
-
-    customers.forEach(name => {
-      const customerItem = document.createElement('div');
-      customerItem.className = 'customer-item p-2 border-bottom text-center';
-      customerItem.textContent = name;
-      customerItem.style.cursor = 'pointer';
-      customerItem.onclick = function () {
-        document.querySelectorAll('.customer-item').forEach(item => item.classList.remove('bg-primary', 'text-white'));
-        customerItem.classList.add('bg-primary', 'text-white'); // Highlight selected
-        selectedCustomerInput.value = name;
-      };
-      customerBox.appendChild(customerItem);
-    });
-  } catch (error) {
-    console.error('❌ Error loading customer data:', error);
-    document.getElementById('customer-box').innerHTML = '<p class="text-danger">Error loading customers.</p>';
+        // Add to customer-list
+        const listItem = document.createElement('div');
+        listItem.className = 'd-flex justify-content-between align-items-center p-2 border-bottom';
+        listItem.innerHTML = `
+          <span>${name}</span>
+          <button class="btn btn-sm btn-danger" onclick="removeCustomer('${name}')">Remove</button>
+        `;
+        customerList.appendChild(listItem);
+      });
+    } catch (error) {
+      console.error('❌ Error loading customer data:', error);
+      document.getElementById('customer-box').innerHTML = '<p class="text-danger">Error loading customers.</p>';
+      document.getElementById('customer-list').innerHTML = '<p class="text-danger">Error loading customers.</p>';
+    }
   }
-}
 
-// ✅ Load customers on page load
-loadCustomers();
-
+  // Load customers on page load
+  loadCustomers();
 
   // ✅ Remove Customer
   async function removeCustomer(customerName) {
     console.log(`Attempting to remove: ${customerName}`); 
-  if (!confirm(`Are you sure you want to remove "${customerName}"?`)) return;
+    if (!confirm(`Are you sure you want to remove "${customerName}"?`)) return;
 
-  try {
-    const response = await fetch(`http://localhost:5000/customers/${encodeURIComponent(customerName)}`, {
-      method: 'DELETE',
-    });
+    try {
+      const response = await fetch(`http://localhost:5000/customers/${encodeURIComponent(customerName)}`, {
+        method: 'DELETE',
+      });
 
-    const data = await response.json();
-    if (response.ok) {
-      alert(`✅ "${customerName}" has been removed.`);
-      loadCustomers(); // ✅ Refresh customer list
-    } else {
-      alert(`❌ Error: ${data.error}`);
+      const data = await response.json();
+      if (response.ok) {
+        alert(`✅ "${customerName}" has been removed.`);
+        loadCustomers(); // ✅ Refresh customer list
+      } else {
+        alert(`❌ Error: ${data.error}`);
+      }
+    } catch (error) {
+      console.error('❌ Error:', error);
     }
-  } catch (error) {
-    console.error('❌ Error:', error);
   }
-}
-
 
   // ✅ Form Submission to Google Sheets
   const scriptURL = 'https://script.google.com/macros/s/AKfycbxA8p5FW01AFUx2li8AqZYxKgiqwntZ3_MPHTsmW06KK1tQ0AyvN-_ef5l8XoFpNZp90w/exec';
