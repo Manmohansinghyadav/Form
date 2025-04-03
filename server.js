@@ -4,7 +4,7 @@ const fs = require('fs').promises;
 const path = require('path');
 
 const app = express();
-const PORT = process.env.PORT || 3000
+const PORT = process.env.PORT || 3000; 
 
 // ✅ Middleware
 app.use(cors());
@@ -76,8 +76,8 @@ router.delete('/customers/:name', async (req, res, next) => {
   }
 });
 
-// ✅ Attach router to the app
-app.use(router);
+// ✅ Attach router to `/api`
+app.use('/api', router);
 
 // ✅ Centralized Error Handler
 app.use((err, req, res, next) => {
